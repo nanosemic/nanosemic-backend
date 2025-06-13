@@ -1,4 +1,4 @@
-o// controllers/adminController.js
+// controllers/adminController.js
 import Admin from "../models/admin.model.js";
 import Order from "../models/order.model.js";
 import bcrypt from "bcryptjs";
