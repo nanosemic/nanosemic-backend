@@ -30,7 +30,7 @@ const port = 3000;
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: ["http://localhost:5173", "https://nanosemic.co.in"],
     credentials: true,
   })
 ); 
