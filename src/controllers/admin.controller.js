@@ -1,4 +1,4 @@
-// controllers/adminController.js
+o// controllers/adminController.js
 import Admin from "../models/admin.model.js";
 import Order from "../models/order.model.js";
 import bcrypt from "bcryptjs";
@@ -91,15 +91,15 @@ const verifyEmail = async (req, res) => {
 
     res.cookie("access_token", accessToken, {
       httpOnly: true,
-      secure: false,
-      sameSite: "lax",
+      secure: true,
+      sameSite: "none",
       maxAge: 15 * 60 * 1000,
     });
 
     res.cookie("refresh_token", refreshToken, {
       httpOnly: true,
-      secure: false,
-      sameSite: "lax",
+      secure: true,
+      sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -150,15 +150,15 @@ const login = async (req, res) => {
 
   res.cookie("access_token", accessToken, {
     httpOnly: true,
-    secure: false,
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
     maxAge: 15 * 60 * 1000,
   });
 
   res.cookie("refresh_token", refreshToken, {
     httpOnly: true,
-    secure: false,
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
