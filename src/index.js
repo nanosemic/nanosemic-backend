@@ -1,11 +1,12 @@
-import express from 'express'
-import mongoose from 'mongoose'
-import dotenv from 'dotenv'
-import productRouter from './routes/product.route.js'
+import express from 'express';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+dotenv.config();
+import productRouter from './routes/product.route.js';
 
 import authRoutes from './routes/auth.route.js'
 import adminRoutes from './routes/admin.route.js';
-import cors from 'cors'
+import cors from 'cors';
 
 import orderRouter from './routes/order.route.js'
 import cartRoutes from './routes/cart.routes.js';
@@ -14,13 +15,15 @@ import  updateaddress  from './routes/address.route.js'
 import orderRoutes from './routes/order.route.js';
 
 import orderRouterAdmin from './routes/adminorder.route.js';
-dotenv.config()
 
-mongoose.connect(process.env.MONGO).then(() => {
+
+
+mongoose.connect("mongodb+srv://nanosemicweboperations:Nanosemic@cluster1.ibniwbk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1").then(() => {
   console.log('MongoDB connected')
 }   ).catch(err => {    
   console.error('MongoDB connection error:', err)
 });
+
 
 
 const app = express();

@@ -7,72 +7,50 @@ export const placeorder = async (req, res) => {
   try {
     const userId = req.user;
 
-    // Get the latest address from Address collection
-    const addressDoc = await Address.findOne({ user: userId });
-    const address = addressDoc?.addresses?.at(-1);
+    // Expecting the selected address from frontend
+    const selectedAddress = req.body.selectedAddress;
 
-    if (!address) {
-      return res.status(400).json({ message: "No address found for the user." });
-    }
-
-    // Extract only required fields
-    const selectedAddress = {
-      street: address?.street,
-      city: address?.city,
-      state: address?.state,
-      zipCode: address?.zipCode,
-      country: address?.country
-    };
-
-    // Validate required address fields
-    if (!selectedAddress.street || !selectedAddress.city || !selectedAddress.state) {
-      return res.status(400).json({ message: "Incomplete address." });
+    // Validate presence of selected address
+    if (!selectedAddress || !selectedAddress.street || !selectedAddress.city || !selectedAddress.state) {
+      return res.status(400).json({ message: "Incomplete or missing address from request." });
     }
 
     const { paymentMethod = 'Cash on Delivery' } = req.body;
 
-    // Fetch user's cart and populate product references
+    // Fetch user's cart and populate products
     const cart = await Cart.findOne({ user: userId }).populate('products.product');
 
     if (!cart || cart.products.length === 0) {
       return res.status(400).json({ message: 'Your cart is empty.' });
     }
 
-    // Format cart products
+    // Format products
     const formattedProducts = cart.products.map(item => ({
       product: item.product._id,
       quantity: item.quantity
     }));
 
-    // Create new order
+    // Create and save order
     const newOrder = new Order({
       user: userId,
       products: formattedProducts,
       totalPrice: cart.totalPrice,
-      address: selectedAddress,
+      address: selectedAddress, // ⬅️ Use the one sent from frontend
       paymentMethod,
       status: 'Pending',
       statusMessage: 'Order placed successfully.'
     });
 
-    // Save the order with validation
-    try {
-      await newOrder.save();
-      console.log("Order saved successfully:", newOrder._id);
-    } catch (saveErr) {
-      console.error("Error saving order:", saveErr);
-      return res.status(500).json({ message: "Failed to save order", error: saveErr.message });
-    }
+    await newOrder.save();
+    console.log("Order saved:", newOrder._id);
 
-    // Clear the cart after successful order
-    // cart.products = [];
-    // cart.totalPrice = 0;
-    // await cart.save();
+    // Optionally clear the cart
+    // await Cart.findOneAndDelete({ user: userId });
 
-    return res.status(201).json({ message: 'Order placed successfully.', order: newOrder });
+    res.status(201).json({ message: 'Order placed successfully.', order: newOrder });
   } catch (err) {
     console.error('Error placing order:', err);
-    return res.status(500).json({ message: 'Internal server error while placing order.' });
+    res.status(500).json({ message: 'Internal server error while placing order.' });
   }
 };
 

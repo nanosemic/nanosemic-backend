@@ -115,8 +115,18 @@ const verifyEmail = async (req, res) => {
 
 const logOut = async (req, res) => {
   try {
-    res.clearCookie("access_token");
-    res.clearCookie("refresh_token");
+     res.clearCookie("access_token", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+     path: "/",
+  });
+  res.clearCookie("refresh_token", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+     path: "/",
+  });
     res.json({ message: "Logged out" });
   } catch (error) {
     // next(error);

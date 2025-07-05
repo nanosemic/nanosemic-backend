@@ -4,11 +4,10 @@ import {
   updateOrderStatus,
   
 } from '../controllers/adminorder.controller.js';
-import auth from '../middlewares/auth.js';
-
+import  verifyAccessToken  from '../middlewares/auth.js';
 const router = express.Router();
 // only by admin
-router.get("/order",auth,getAllOrdersAdmin);
-router.put('/status/:orderId',auth, updateOrderStatus);
+router.get("/order",verifyAccessToken,getAllOrdersAdmin);
+router.put('/status/:orderId',verifyAccessToken,updateOrderStatus);
 
 export default router;
