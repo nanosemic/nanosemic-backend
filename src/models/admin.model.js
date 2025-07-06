@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema({
   isVerified: { type: Boolean, default: false },
   verificationCode: String,
   verificationCodeExpires: Date,
+  isadmin: { type: Boolean, default: false }, // Admin flag
 });
 
 const Admin = mongoose.model("Admin", userSchema);

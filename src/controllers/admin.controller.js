@@ -70,6 +70,7 @@ const verifyEmail = async (req, res) => {
       username,
       email,
       password: hashedPassword,
+      isadmin: false, // Set isadmin to false by default
       // code
     });
 
@@ -107,6 +108,7 @@ const verifyEmail = async (req, res) => {
       message: "Logged in",
       username: newUser.username,
       email: newUser.email,
+      isadmin: newUser.isadmin, // ✅ Include isadmin flag here
     });
   } catch (error) {
     console.log(error);
@@ -115,18 +117,18 @@ const verifyEmail = async (req, res) => {
 
 const logOut = async (req, res) => {
   try {
-     res.clearCookie("access_token", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-     path: "/",
-  });
-  res.clearCookie("refresh_token", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-     path: "/",
-  });
+    res.clearCookie("access_token", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      path: "/",
+    });
+    res.clearCookie("refresh_token", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      path: "/",
+    });
     res.json({ message: "Logged out" });
   } catch (error) {
     // next(error);
@@ -176,6 +178,7 @@ const login = async (req, res) => {
     message: "Logged in",
     username: admin.username,
     email: admin.email,
+    isadmin: admin.isadmin, // ✅ Include isadmin flag here
   });
 };
 
@@ -239,11 +242,12 @@ const google = async (req, res) => {
         Math.random().toString(36).slice(-8);
       const hashedPassword = bcrypt.hashSync(generatedPassword, 10);
       const newUser = new Admin({
-        username: 
+        username:
           req.body.name.split(" ").join("").toLowerCase() +
           Math.random().toString(36).slice(-4),
         email: req.body.email,
         password: hashedPassword,
+        isadmin: false, // Set isadmin to false by default
       });
       await newUser.save();
 
@@ -276,7 +280,12 @@ const google = async (req, res) => {
         sameSite: "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
-      res.json(rest);
+      res.json({
+        username: rest.username,
+        email: rest.email,
+        isadmin: rest.isadmin, // ✅ Add this too
+      });
+
     }
   } catch (error) {
     // next(error);
@@ -286,11 +295,14 @@ const google = async (req, res) => {
 
 const profile = async (req, res) => {
   try {
-    // const user = await Admin.findById(req.user.id);
-    // if (!user) {
-    //   return res.status(404).json({ message: "Admin not found" });
-    // }
-    // res.json(user);
+    const user = await Admin.findById(req.user);
+    if (!user) return res.status(404).json({ message: "Admin not found" });
+
+    res.json({
+      username: user.username,
+      email: user.email,
+      isadmin: user.isadmin,
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
@@ -313,6 +325,68 @@ const getOrderStats = async (req, res) => {
   const stats = await Order.aggregate(pipeline);
   res.json(stats);
 };
+
+
+// Grant admin access
+const grantAdminAccess = async (req, res, next) => {
+  const { email } = req.body;
+
+  try {
+    const requestingUser = await Admin.findById(req.user);
+    if (!requestingUser || !requestingUser.isadmin) {
+      return next(errorHandler(403, "Only admins can grant admin access."));
+    }
+    console.log("Requesting user:", requestingUser);
+    console.log(email);
+    const user = await Admin.findOne({ email });
+    if (!user) return next(errorHandler(404, "User not found"));
+
+    user.isadmin = true;
+    await user.save();
+
+    res.status(200).json({ message: `${email} is now an admin.` });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Revoke admin access
+const revokeAdminAccess = async (req, res, next) => {
+  const { email } = req.body;
+
+  try {
+    const requestingUser = await Admin.findById(req.user);
+    if (!requestingUser || !requestingUser.isadmin) {
+      return next(errorHandler(403, "Only admins can revoke admin access."));
+    }
+
+    const user = await Admin.findOne({ email });
+    if (!user) return next(errorHandler(404, "User not found"));
+
+    user.isadmin = false;
+    await user.save();
+
+    res.status(200).json({ message: `${email} is no longer an admin.` });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Optional: List all users
+const listAllUsers = async (req, res, next) => {
+  try {
+    const requestingUser = await Admin.findById(req.user);
+    if (!requestingUser || !requestingUser.isadmin) {
+      return next(errorHandler(403, "Only admins can view users."));
+    }
+
+    const users = await Admin.find({}, "username email isadmin");
+    res.status(200).json(users);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export default {
   signup,
   verifyEmail,
@@ -324,4 +398,7 @@ export default {
   getOrderStats,
   google,
   saveContact,
+  grantAdminAccess,
+  revokeAdminAccess,
+  listAllUsers,
 };
