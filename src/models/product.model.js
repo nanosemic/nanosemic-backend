@@ -10,32 +10,36 @@ const productSchema = new Schema({
 		type: String,
 		required: [true, "product description is required"],
 	},
-    includes : {
-        type : [String],
-		default : [],
-    },
+	includes: {
+		type: [String],
+		default: [],
+	},
 	price: {
 		type: Number,
 		required: [true, "Product price is required"],
 	},
 	category: {
 		type: String,
-		enum: ['Health Products', 'Education Products','Agriculture Products','Safety Products'],
-		required: [true,"Product categaory is required"],
+		enum: ['Health Products', 'Education Products', 'Agriculture Products', 'Safety Products'],
+		required: [true, "Product categaory is required"],
 	},
-	imageUrls : {
-		type : [String],
-		default : [],
-        // required : [true, "Product image is required"],
+	imageUrls: {
+		type: [String],
+		default: [],
+		// required : [true, "Product image is required"],
 	},
-	
+
 	stock: {
 		type: Number,
 	},
-    discount : {
-        type : Number,
-        default : 0,
-    }
-},{timestamps : true});
+	discount: {
+		type: Number,
+		default: 0,
+	},
+	isLaunchingSoon: {
+		type: Boolean,
+		default: false,
+	},
+}, { timestamps: true });
 
-export default  mongoose.model('Product', productSchema);
+export default mongoose.model('Product', productSchema);

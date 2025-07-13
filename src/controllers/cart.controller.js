@@ -10,33 +10,50 @@ const getDiscountedPrice = (product) => {
 
 export const addToCart = async (req, res) => {
   try {
-    const {  productId, quantity } = req.body;
+    const { productId, quantity } = req.body;
     const parsedQuantity = parseInt(quantity);
-    console.log(req.user)
     const userId = req.user;
+
     const product = await Product.findById(productId);
     if (!product) return res.status(404).json({ message: 'Product not found' });
 
     let cart = await Cart.findOne({ user: userId });
 
     if (!cart) {
+      // If stock is less than desired quantity, deny
+      if (product.stock < parsedQuantity) {
+        return res.status(400).json({ message: `Only ${product.stock} item(s) left in stock.` });
+      }
+
       cart = new Cart({
         user: userId,
-        products: [{ product: productId,quantity: parsedQuantity }],
+        products: [{ product: productId, quantity: parsedQuantity }],
         totalPrice: getDiscountedPrice(product) * parsedQuantity,
       });
     } else {
       const existingProduct = cart.products.find(
         (item) => item.product.toString() === productId
       );
-      
+
+      let totalQuantityInCart = parsedQuantity;
+      if (existingProduct) {
+        totalQuantityInCart += existingProduct.quantity;
+      }
+
+      // Check against available stock
+      if (totalQuantityInCart > product.stock) {
+        return res.status(400).json({
+          message: `Only ${product.stock} item(s) available. You already have ${existingProduct ? existingProduct.quantity : 0} in your cart.`,
+        });
+      }
+
       if (existingProduct) {
         existingProduct.quantity += parsedQuantity;
       } else {
         cart.products.push({ product: productId, quantity: parsedQuantity });
       }
 
-      // Recalculate totalPrice using discounted prices
+      // Recalculate total price
       let total = 0;
       for (const item of cart.products) {
         const prod = await Product.findById(item.product);
@@ -55,6 +72,7 @@ export const addToCart = async (req, res) => {
     res.status(500).json({ message: 'Server Error' });
   }
 };
+
 
 // Get all cart items for logged-in user
 export const getCartItems = async (req, res) => {
